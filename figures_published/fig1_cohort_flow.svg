@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="379.224567pt" height="263.315906pt" viewBox="0 0 379.224567 263.315906" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-02T12:35:04.012496</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.6, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 263.315906 
+L 379.224567 263.315906 
+L 379.224567 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <path d="M 232.560709 238.543654 
+L 232.560709 8.031118 
+" clip-path="url(#p456e8338a2)" style="fill: none; stroke-dasharray: 3.2,2.4; stroke-dashoffset: 0; stroke: #bbbbbb; stroke-width: 0.8"/>
+   </g>
+   <g id="patch_2">
+    <path d="M 19.685906 31.21115 
+L 213.88748 31.21115 
+L 213.88748 8.031118 
+L 19.685906 8.031118 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #1a1a1a"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 19.685906 78.858992 
+L 213.88748 78.858992 
+L 213.88748 53.103402 
+L 19.685906 53.103402 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #1a1a1a"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 19.685906 127.794614 
+L 213.88748 127.794614 
+L 213.88748 103.326803 
+L 19.685906 103.326803 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #1a1a1a"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 19.685906 188.320252 
+L 213.88748 188.320252 
+L 213.88748 161.276882 
+L 19.685906 161.276882 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #1a1a1a"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 146.663858 158.701323 
+L 221.356772 158.701323 
+L 221.356772 129.082394 
+L 146.663858 129.082394 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #6e6e6e"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 19.685906 235.968094 
+L 213.88748 235.968094 
+L 213.88748 206.349165 
+L 19.685906 206.349165 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #1a1a1a"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 258.703228 35.074488 
+L 363.273307 35.074488 
+L 363.273307 8.031118 
+L 258.703228 8.031118 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #444444"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 258.703228 80.146772 
+L 363.273307 80.146772 
+L 363.273307 54.391181 
+L 258.703228 54.391181 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #444444"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 258.703228 135.521291 
+L 363.273307 135.521291 
+L 363.273307 104.614583 
+L 258.703228 104.614583 
+z
+" clip-path="url(#p456e8338a2)" style="fill: #ffffff; stroke: #444444"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="17.999907" transform="rotate(-0 116.786693 17.999907)">50 patients</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="26.642616" transform="rotate(-0 116.786693 26.642616)">public multimodal PSG dataset (Tao et al. 2025)</text>
+   </g>
+   <g id="patch_11">
+    <path d="M 116.786693 31.21115 
+Q 116.786693 42.157276 116.786693 51.873564 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 118.986693 47.473564 
+L 116.786693 51.873564 
+L 114.586693 47.473564 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="63.877568" transform="rotate(-0 116.786693 63.877568)">34,643 candidate 30-s windows</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="73.561802" transform="rotate(-0 116.786693 73.561802)">grid already past awake-overlap and signal-quality gates</text>
+   </g>
+   <g id="patch_12">
+    <path d="M 116.786693 78.858992 
+Q 116.786693 91.092898 116.786693 102.096966 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 118.986693 97.696966 
+L 116.786693 102.096966 
+L 114.586693 97.696966 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="113.725" transform="rotate(-0 116.786693 113.725)">Main-label processing</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="122.865502" transform="rotate(-0 116.786693 122.865502)">overlap with retained, non-wake, expert-scored events</text>
+   </g>
+   <g id="patch_13">
+    <path d="M 116.786693 127.794614 
+Q 116.786693 144.535748 116.786693 160.047045 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 118.986693 155.647045 
+L 116.786693 160.047045 
+L 114.586693 155.647045 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="172.550768" transform="rotate(-0 116.786693 172.550768)">30,506 analysable windows</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="182.662483" transform="rotate(-0 116.786693 182.662483)">11,514 positive  ·  18,992 negative</text>
+   </g>
+   <g id="patch_14">
+    <path d="M 116.786693 188.320252 
+Q 116.786693 197.334709 116.786693 205.119328 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 118.986693 200.719328 
+L 116.786693 205.119328 
+L 114.586693 200.719328 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="184.010315" y="140.945955" transform="rotate(-0 184.010315 140.945955)">4,137 excluded</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 7.2px; font-family: 'Times New Roman'; fill: #1a1a1a" transform="translate(150.31769 148.367948)">indeterminate windows</text>
+    <text style="font-size: 7.2px; font-family: 'Times New Roman'; fill: #1a1a1a" transform="translate(155.45669 155.907473)">(0 &lt; overlap &lt; 10 s)</text>
+   </g>
+   <g id="patch_15">
+    <path d="M 116.786693 144.535748 
+Q 131.725276 144.535748 145.434021 144.535748 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 141.034021 142.335748 
+L 145.434021 144.535748 
+L 141.034021 146.735748 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="218.436867" transform="rotate(-0 116.786693 218.436867)">Patient-level nested cross-validation</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="116.786693" y="229.596669" transform="rotate(-0 116.786693 229.596669)">5 outer × 4 inner folds; one out-of-fold prediction per window</text>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="310.988268" y="19.313442" transform="rotate(-0 310.988268 19.313442)">34 patients</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="310.988268" y="29.42422" transform="rotate(-0 310.988268 29.42422)">with verified airflow channel</text>
+   </g>
+   <g id="patch_16">
+    <path d="M 213.88748 21.552803 
+Q 236.295354 21.552803 257.473391 21.552803 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 253.073391 19.352803 
+L 257.473391 21.552803 
+L 253.073391 23.752803 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 310.988268 35.074488 
+Q 310.988268 44.732835 310.988268 53.161344 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 313.188268 48.761344 
+L 310.988268 53.161344 
+L 308.788268 48.761344 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_15">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="310.988268" y="65.165348" transform="rotate(-0 310.988268 65.165348)">24,441 candidate windows</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 8px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="310.988268" y="74.849581" transform="rotate(-0 310.988268 74.849581)">airflow sub-cohort grid</text>
+   </g>
+   <g id="patch_18">
+    <path d="M 310.988268 80.146772 
+Q 310.988268 92.380677 310.988268 103.384745 
+" style="fill: none; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+    <path d="M 313.188268 98.984745 
+L 310.988268 103.384745 
+L 308.788268 98.984745 
+z
+" style="fill: #1a1a1a; stroke: #1a1a1a; stroke-width: 1.1; stroke-linecap: round"/>
+   </g>
+   <g id="text_17">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'Times New Roman'; text-anchor: middle; fill: #1a1a1a" x="310.988268" y="117.202004" transform="rotate(-0 310.988268 117.202004)">21,441 analysable windows</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 7.2px; font-family: 'Times New Roman'; fill: #1a1a1a" transform="translate(274.000518 124.820588)">secondary paired analysis</text>
+    <text style="font-size: 7.2px; font-family: 'Times New Roman'; fill: #1a1a1a" transform="translate(262.312893 132.373613)">core vs airflow-enhanced features</text>
+   </g>
+   <g id="text_19">
+    <text style="font-style: italic; font-size: 7.5px; font-family: 'Times New Roman'; text-anchor: middle; fill: #666666" x="232.560709" y="251.478143" transform="rotate(-0 232.560709 251.478143)">secondary analysis</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p456e8338a2">
+   <rect x="2.88" y="2.88" width="373.464567" height="257.555906"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -1,0 +1,85 @@
+# =============================================================================
+# PSG_Audio_Benchmark - Stage 6 patient-level split configuration
+# -----------------------------------------------------------------------------
+# Pre-registered, leakage-safe evaluation contract for the CSV-physiology route.
+# This file ONLY declares the patient-level cohort + nested cross-validation
+# design. It is validated in code (src/psg_audio_benchmark/evaluation/config.py);
+# a careless edit that relaxes a hard rule (patient-level split, no window
+# random split, audio block, no model matrix / imputation / normalization /
+# resampling / threshold / metrics) makes the loader fail.
+#
+# Stage 6 builds ONLY the cohort + outer/inner patient folds + a version
+# signature + audit reports. It does NOT train, impute, scale, select features,
+# resample, tune thresholds, evaluate, or read audio/raw. Every later
+# transform (imputer/scaler/selector/resampler/threshold) is fitted INSIDE the
+# training fold of the model stage, never on the full cohort.
+# =============================================================================
+
+splits:
+  # ---- approved inputs (pin the exact audited runs; verified via the gates) ----
+  stage4_input_run_id: stage4-csv-window-index-20260807T170636Z
+  stage5_input_run_id: stage5-physiology-features-20260807T232931Z
+  stage3_input_run_id: stage3-annotation-sync-20260807T154558Z   # provenance only
+
+  # ---- hard leakage rules (mirror config.yaml hard_constraints) ----
+  patient_level_split_required: true
+  allow_window_random_split: false
+  split_uses_only_pre_model_patient_summaries: true   # window counts, pos/neg, pos_rate, modality availability
+  never_uses_model_output_or_predictions: true
+
+  # ---- main analysis: core HR+SpO2 cohort, patient-level, fixed seed, 5-fold outer CV ----
+  main_analysis:
+    cohort: core_hr_spo2
+    unit: patient
+    outer_n_folds: 5
+    outer_fixed_seed: 20250714
+    stratifier: stratified_group_kfold_by_patient_label_burden
+    group_column: patient_id
+    label_for_stratification: binary_event_label
+    sort_patients_by: patient_id_ascending   # makes fold assignment deterministic regardless of row order
+
+  # ---- secondary analysis: airflow-enhanced subcohort INHERITS the core outer fold ----
+  secondary_analysis:
+    cohort: airflow_enhanced
+    airflow_membership_rule: core_hr_spo2_AND_airflow_available   # strict: window must have HR+SpO2+airflow
+    inherits_outer_fold_from: core_hr_spo2
+    independent_random_split_forbidden: true
+
+  # ---- nested inner CV: per outer fold, 4-fold patient-level inner CV over outer-TRAIN only ----
+  inner_cv:
+    inner_n_folds: 4
+    inner_fixed_seed: 20250714
+    stratifier: stratified_group_kfold_by_patient_label_burden
+    scope: outer_train_patients_only
+    outer_test_patients_never_in_inner: true
+
+  # ---- balance policy: patient isolation is primary; report imbalance honestly ----
+  balance:
+    strict_patient_isolation_priority: highest
+    imbalance_handling: report_per_fold_differences; never_move_windows_to_fix_ratios
+    warn_when_test_fold_pos_rate_spread_exceeds: 0.10
+    never_silently_relabel_or_drop_minority: true
+
+  # ---- audio is BLOCKED at this stage (and every downstream CSV route) ----
+  audio:
+    audio_cohort_count: 0
+    audio_features_present: false
+    block_reason: no_trustworthy_audio_time_anchor_unresolved
+    read_wav_forbidden: true
+
+  # ---- nothing downstream is computed in Stage 6 (fitted fold-internally later) ----
+  no_model_matrix: true
+  no_imputation: true
+  no_normalization: true
+  no_feature_selection: true
+  no_class_resampling: true
+  no_threshold_optimization: true
+  no_performance_metrics: true
+  no_audio_access: true
+
+  # ---- versions ----
+  patient_split_version: patient_splits_v1
+  non_clinical_note: >
+    Single public dataset, patient-level INTERNAL validation only (not external
+    validation, not a clinical/deployment claim). CSV physiology features,
+    PSG-anchored retrospective benchmark. Audio remains BLOCKED.

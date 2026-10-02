@@ -1,0 +1,106 @@
+# =============================================================================
+# PSG_Audio_Benchmark - Stage 4 windowing / labeling configuration (CSV side)
+# -----------------------------------------------------------------------------
+# This file is the SINGLE source of configuration for Stage 4
+# (CSV/annotation-side window index + research label table). Every threshold
+# below is read at run time, resolved into a :class:`ResolvedWindowingConfig`,
+# written verbatim into ``windowing_config_resolved.yaml`` per run, and hashed
+# into the run metadata. Nothing here relaxes a hard constraint defined in
+# ``src/psg_audio_benchmark/config.py``.
+#
+# Stage 4 builds ONLY the CSV/annotation-side window index. It does NOT read raw
+# audio, does NOT extract features, does NOT map PSG events to WAV, does NOT
+# train/split/evaluate. ``audio_window_eligible`` is hard-coded False and any
+# attempt to enable it raises a ConfigError.
+#
+# All claims produced from these labels are "dataset-scored respiratory-event
+# RESEARCH labels", never a clinical diagnosis or a PSG replacement.
+# =============================================================================
+
+windowing:
+  # --- grid geometry ---------------------------------------------------------
+  # Fixed-length, non-overlapping main protocol. Coordinates are seconds
+  # relative to each patient's record_start (record_start == 0.0 s).
+  window_length_s: 30.0
+  hop_step_s: 30.0
+  # Boundary semantics. Only this value is permitted for Stage 4.
+  boundary: half_open_start_inclusive_end_exclusive
+  # Time coordinate basis (relative to the record_start annotation clock; this
+  # is NEVER an audio acquisition start).
+  coordinate: relative_to_record_start
+
+  # --- candidate time domain (where windows are generated) -------------------
+  # The candidate domain for each patient is the INTERSECTION of the verified
+  # heart_rate and spo2 coverage extents (both available for all 50 patients),
+  # NOT an assumed whole-night recording length. The grid origin per patient is
+  # the intersection start; windows step until their start reaches the
+  # intersection end.
+  candidate_time_domain: core_signal_intersection
+  core_signal_modalities: [heart_rate, spo2]
+
+  # --- optional modalities ---------------------------------------------------
+  # airflow is available for a subset (34/50). It only enriches each window with
+  # ``has_airflow_coverage``; it is NEVER a required condition for all patients
+  # and never gates label eligibility.
+  optional_signal_modalities: [airflow]
+
+  # --- sleep structure -------------------------------------------------------
+  # sleep_structure is recorded with verification_status `not_verified` (no
+  # relative time column) in Stage 3. It may appear only as an OBSERVATIONAL
+  # context / coverage column; it MUST NOT modify the main label and MUST NOT be
+  # claimed as verified sleep-stage alignment.
+  sleep_structure_role: observational_context_only_not_verified
+
+  # --- core coverage completeness -------------------------------------------
+  # A window must be COMPLETELY covered by BOTH core modalities (heart_rate and
+  # spo2) on their verified extents. Incomplete windows are EXCLUDED with reason
+  # `excluded_incomplete_core_signal_coverage`; they are never zero-padded,
+  # interpolated or range-extended to fake completeness.
+  require_complete_core_coverage: true
+
+  # --- awake overlap rule ----------------------------------------------------
+  # Fraction of the window duration that overlaps the canonical awake intervals.
+  # Default 0.0: ANY overlap excludes the window (`excluded_awake_overlap`).
+  # The reason is always retained; windows are never silently dropped.
+  max_awake_overlap_fraction: 0.0
+
+  # --- event <-> window association -----------------------------------------
+  # An event is associated to a window by its START POINT only, under the
+  # half-open [start, end) rule. An event whose start lands in exactly one
+  # window is counted there; its duration/end are recorded so a cross-boundary
+  # event is never double-counted.
+  event_link_rule: event_start_point_half_open
+  # An event that itself overlaps an awake interval is set aside (destiny
+  # `awake_overlap_event`): it creates no positive window and is never treated
+  # as a negative. Awake-overlap / out-of-domain / no-valid-window events are
+  # accounted separately and never hidden.
+  require_event_not_awake_overlap: true
+
+  # --- research label semantics ---------------------------------------------
+  # label_status: positive | negative | excluded  (mutually exclusive).
+  #   positive: core-complete + awake-qualified window with >= 1 retained event
+  #             start  -> binary_event_label = 1
+  #   negative: core-complete + awake-qualified window with 0 retained event
+  #             starts -> binary_event_label = 0
+  #   excluded: incomplete core coverage OR awake overlap
+  #             -> binary_event_label = NULL (never recorded as negative)
+  binary_event_label_field: binary_event_label
+  non_clinical_label_note: >
+    research label only (dataset-scored respiratory event); NOT a clinical
+    diagnosis, NOT a PSG replacement, NOT obstructive/central/mixed-typed.
+
+  # --- audio block (hard) ----------------------------------------------------
+  audio:
+    # Hard-coded False. All audio files are unresolved / excluded in Stage 3, so
+    # NO window is audio-eligible. Setting this true raises ConfigError.
+    audio_window_eligible: false
+    block_reason: no_trustworthy_audio_time_anchor_unresolved
+    # Substituting record_start / mtime / filename / order / duration for a real
+    # audio time anchor is forbidden.
+    allow_substitute_anchors: false
+
+  # --- split policy (informational; enforced in code) -----------------------
+  # Stage 4 performs NO random window split and emits NO train/val/test split.
+  # All downstream experiments remain patient-level only.
+  perform_random_window_split: false
+  emit_train_val_test_split: false

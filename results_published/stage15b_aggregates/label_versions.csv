@@ -1,0 +1,5 @@
+variant,name,n_windows,n_positive,n_negative,n_indeterminate,positive_rate
+main,overlap_ge_10s,34643,11514,18992,4137,0.37743394742017966
+sensitivity_onset,event_start_point_half_open,34643,9732,24911,0,0.2809225528966891
+sensitivity_any,any_overlap,34643,15651,18992,0,0.45177958029039056
+sensitivity_cov50,coverage_ge_50pct,34643,7516,18992,8135,0.2835370454202505

@@ -1,0 +1,42 @@
+{
+  "run_id": "stage15b-bspc-reanalysis-20260808T160452Z",
+  "seed": 20250714,
+  "onset_matches_stage4": true,
+  "n_patients": 50,
+  "n_cohort_windows": 34643,
+  "label_variants": {
+    "main": {
+      "n_windows": 34643,
+      "n_positive": 11514,
+      "n_negative": 18992,
+      "n_indeterminate": 4137,
+      "positive_rate": 0.37743394742017966
+    },
+    "sensitivity_onset": {
+      "n_windows": 34643,
+      "n_positive": 9732,
+      "n_negative": 24911,
+      "n_indeterminate": 0,
+      "positive_rate": 0.2809225528966891
+    },
+    "sensitivity_any": {
+      "n_windows": 34643,
+      "n_positive": 15651,
+      "n_negative": 18992,
+      "n_indeterminate": 0,
+      "positive_rate": 0.45177958029039056
+    },
+    "sensitivity_cov50": {
+      "n_windows": 34643,
+      "n_positive": 7516,
+      "n_negative": 18992,
+      "n_indeterminate": 8135,
+      "positive_rate": 0.2835370454202505
+    }
+  },
+  "main_overlap_threshold_s": 10.0,
+  "airflow_subcohort_patients": 34,
+  "airflow_subcohort_windows": 24441,
+  "audio_blocked": true,
+  "audio_eligible_windows": 0
+}

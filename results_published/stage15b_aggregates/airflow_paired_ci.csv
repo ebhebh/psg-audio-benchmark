@@ -1,0 +1,4 @@
+run_id,model,metric,kind,direction,delta_point_estimate,ci_low,ci_high,core_point_estimate,enhanced_point_estimate,n_resamples,n_used,n_single_class_skipped,ci_level,unit
+stage15b-bspc-reanalysis-20260808T160452Z,airflow_enhanced_minus_core_restricted,auroc,threshold_free,enhanced_minus_core,-0.002214267780108803,-0.024633469621687283,0.018079676047271988,0.814522340426216,0.8123080726461072,1000,1000,0,0.95,patient
+stage15b-bspc-reanalysis-20260808T160452Z,airflow_enhanced_minus_core_restricted,auprc,threshold_free,enhanced_minus_core,-0.008667349812136904,-0.03310396859019189,0.01452926417199123,0.6990562812378083,0.6903889314256714,1000,1000,0,0.95,patient
+stage15b-bspc-reanalysis-20260808T160452Z,airflow_enhanced_minus_core_restricted,brier,threshold_free,enhanced_minus_core,-0.003567781212891419,-0.013015425199135395,0.00876517673079408,0.18011842891582547,0.17655064770293405,1000,1000,0,0.95,patient

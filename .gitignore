@@ -1,0 +1,44 @@
+# Data never enters the repository. Keep only the acquisition README and the
+# empty runtime placeholder so `scripts/00_setup_check.py` passes on a fresh
+# clone (the directory itself must exist; its contents must stay empty here).
+data/*
+!data/README.md
+!data/interim/
+data/interim/*
+!data/interim/.gitkeep
+
+# A reproducer's saved copies of the official license pages stay LOCAL (they
+# may contain personal account information). The unfilled template and the
+# verification-steps README do ship.
+docs/license_evidence/saved_pages/
+
+# Bulk data file types (anywhere) never enter the repository
+*.parquet
+*.7z
+*.zip
+*.tar
+*.tar.gz
+*.wav
+*.edf
+*.csv.gz
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.venv/
+
+# Run outputs (regenerate locally; never commit). Keep the empty directory
+# placeholders that 00_setup_check.py requires to exist.
+results/
+models/
+reports/*
+!reports/.gitkeep
+logs/*
+!logs/.gitkeep
+features/*
+!features/.gitkeep
+figures_out/

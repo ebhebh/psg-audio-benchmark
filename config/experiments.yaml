@@ -1,0 +1,157 @@
+# =============================================================================
+# PSG_Audio_Benchmark - experiment registry (pre-declared, NOT executed)
+# -----------------------------------------------------------------------------
+# Every entry is a configuration + a status. In Stage 0 all statuses are
+# "planned". No results, metrics or numbers are recorded here at any time;
+# results live under results/ and reports/ and are always traceable to a
+# run_id, config hash and data manifest hash.
+#
+# Allowed status values: planned | in_progress | completed | skipped
+# =============================================================================
+
+status_values: [planned, in_progress, completed, skipped]
+
+# ---------------------------------------------------------------------------
+# Baseline / traditional ML models (same splits, same feature tables).
+# ---------------------------------------------------------------------------
+baseline_models:
+  dummy:
+    status: planned
+    role: sanity_lower_bound
+  logistic_regression:
+    status: planned
+    family: traditional_ml
+  random_forest:
+    status: planned
+    family: traditional_ml
+  lightgbm:
+    status: planned
+    family: traditional_ml
+    primary: true
+  xgboost:
+    status: planned
+    family: traditional_ml
+    primary: true
+  svm:
+    status: planned
+    family: traditional_ml
+    optional: true
+
+# ---------------------------------------------------------------------------
+# Validation schemes. Outer splits are ALWAYS patient-level.
+# ---------------------------------------------------------------------------
+validation:
+  patient_level_5fold_cv:
+    status: planned
+    outer_level: patient
+    inner_tuning: groupkfold_within_train_fold
+    stratification: patient_level_label_burden_and_modality_only
+  loso:
+    status: planned
+    optional: true
+    outer_level: patient
+
+# ---------------------------------------------------------------------------
+# Cross-device main designs (all subject-disjoint).
+# ---------------------------------------------------------------------------
+cross_device_designs:
+  smartphone_train_to_smartphone_test:
+    status: planned
+    subject_disjoint: true
+  recorder_train_to_recorder_test:
+    status: planned
+    subject_disjoint: true
+  smartphone_train_to_recorder_test:
+    status: planned
+    subject_disjoint: true
+  recorder_train_to_smartphone_test:
+    status: planned
+    subject_disjoint: true
+  combined_train_to_smartphone_test:
+    status: planned
+    subject_disjoint: true
+  combined_train_to_recorder_test:
+    status: planned
+    subject_disjoint: true
+
+paired_device_auxiliary:
+  status: planned
+  subject_disjoint: false
+  role: device_level_comparison_only
+  note: >
+    Same-patient smartphone/recorder pairing is an AUXILIARY device-level
+    analysis. It MUST be reported in a separate file/figure/section and is NOT
+    evidence of patient-level generalization or external validation.
+
+# ---------------------------------------------------------------------------
+# Sensitivity analyses.
+# ---------------------------------------------------------------------------
+sensitivity:
+  window_10s: {status: planned}
+  window_60s: {status: planned}
+  label_rule_any_overlap: {status: planned}
+  label_rule_ge_50pct_overlap: {status: planned}
+  label_rule_ge_5s_overlap: {status: planned}
+  wake_inclusion: {status: planned}
+  event_subtype_stratified: {status: planned}
+  airflow_subset_vs_full_cohort: {status: planned}
+  model_type_comparison: {status: planned}
+  causal_vs_retrospective:
+    status: planned
+    conditional_on_implementation: true
+
+# ---------------------------------------------------------------------------
+# Feature sets. Missing modalities must be reflected in the manifest, never
+# imputed by dropping patients.
+# ---------------------------------------------------------------------------
+feature_sets:
+  smartphone_audio_only: {status: planned}
+  recorder_audio_only: {status: planned}
+  physiology_only_SpO2_HR: {status: planned}
+  airflow_only: {status: planned, subset: true}
+  physiology_SpO2_HR_airflow: {status: planned, subset: true}
+  smartphone_audio_plus_SpO2_HR: {status: planned}
+  recorder_audio_plus_SpO2_HR: {status: planned}
+  smartphone_audio_plus_SpO2_HR_airflow: {status: planned, subset: true}
+  recorder_audio_plus_SpO2_HR_airflow: {status: planned, subset: true}
+  combined_device_audio: {status: planned}
+  combined_device_audio_plus_physiology: {status: planned}
+
+airflow_subset_policy:
+  status: planned
+  rule: >
+    airflow is available only for a subset of patients (literature ~36/50, to
+    be confirmed by audit). It is used ONLY as an explicitly-labelled subset
+    analysis; missing airflow MUST NOT cause other patients to be dropped.
+
+# ---------------------------------------------------------------------------
+# GPU enhancement modules (optional; must not break the CPU main line).
+# ---------------------------------------------------------------------------
+gpu_enhancement:
+  policy: optional_and_isolated
+  reuse_same_labels_folds_and_audit: true
+  modules:
+    frozen_pretrained_embeddings:
+      status: planned
+      priority: 1
+      optional: true
+      examples: [PANNs, AST, WavLM, Whisper, CLAP]
+    small_mel_cnn:
+      status: planned
+      priority: 2
+      optional: true
+      example: ResNet18_on_mel
+    crnn:
+      status: planned
+      priority: 3
+      optional: true
+    fine_tuning_and_multimodal_fusion:
+      status: planned
+      priority: 4
+      optional: true
+      exploratory: true
+    device_invariant_domain_adversarial:
+      status: planned
+      priority: 5
+      optional: true
+      exploratory: true

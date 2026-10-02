@@ -1,0 +1,147 @@
+# =============================================================================
+# PSG_Audio_Benchmark - Stage 5 physiology feature configuration (CSV side)
+# -----------------------------------------------------------------------------
+# This file is the SINGLE source of configuration for Stage 5
+# (CSV physiological-signal feature extraction + quality audit). Every
+# threshold, version and feature list below is read at run time, resolved into a
+# :class:`ResolvedPhysiologyFeatureConfig`, written verbatim into
+# ``physiology_features_resolved.yaml`` per run, and hashed into the run
+# metadata. Nothing here relaxes a hard constraint defined in
+# ``src/psg_audio_benchmark/config.py``.
+#
+# Stage 5 reads ONLY raw physiological CSV samples (heart_rate, spo2, airflow)
+# inside each Stage-4 positive/negative window. It does NOT read audio, does NOT
+# map audio to events, does NOT train / split / tune / evaluate, and does NOT
+# change any Stage-4 label. ``audio_features_present`` is hard-coded False.
+#
+# All features are descriptive input-side quantities for a retrospective,
+# PSG-anchored benchmark. They are NOT a clinical diagnosis and NOT a PSG
+# replacement. The labels are dataset-scored respiratory-event RESEARCH labels;
+# using HR/SpO2/airflow to predict them risks label/physiology overlap and must
+# be reported as such.
+# =============================================================================
+
+physiology_features:
+  # --- provenance / input -----------------------------------------------------
+  # Approved Stage-4 CSV window-index run (the window + label table). The runner
+  # also reads Stage-3 signal_time_ranges / record_time_anchors (for per-patient
+  # signal extents, source relpaths and offsets) and the raw physiological CSVs.
+  # It NEVER reads *.wav and never modifies data/raw.
+  stage4_input_run_id: stage4-csv-window-index-20260807T170636Z
+  stage3_input_run_id: stage3-annotation-sync-20260807T154558Z
+  feature_only_for_label_statuses: [positive, negative]   # excluded windows are NOT feature candidates
+
+  # --- feature time contract (anti-leakage) -----------------------------------
+  # Each feature uses ONLY the half-open interval
+  # [window_start_relative_to_record_start, window_end_relative_to_record_start)
+  # of CSV samples. No outside samples, no forward/backward fill, no future
+  # windows, no whole-night statistics. Selection is by TIME, not CSV row index.
+  boundary: half_open_start_inclusive_end_exclusive
+  coordinate: relative_to_record_start
+  cross_midnight_clock: inherits_stage3_verified_time_axis
+  # Per-sample mapping (inherits the Stage-3 verified clock):
+  #   t_rel_i = first_absolute_relative_to_record_start + parsed_relative_position_seconds_i
+  time_mapping: relative_position_plus_stage3_offset
+  # Label / annotation side columns that MUST NEVER enter a feature computation.
+  # The feature functions accept only (sample times, sample values, fs, config);
+  # passing any forbidden field is rejected.
+  forbidden_feature_inputs:
+    - binary_event_label
+    - label_status
+    - exclusion_reason
+    - n_linked_retained_events
+    - event_type_standardized
+    - awake_overlap_fraction
+    - sleep_structure_observational_status
+    - annotation
+    - any_audio_field
+
+  # --- coverage / quality gate ------------------------------------------------
+  # A modality is AVAILABLE for a window iff coverage_fraction >= min_coverage
+  # AND n_finite >= min_samples_for_statistics. Below the gate, every numeric
+  # feature for that modality is NULL and quality_status records why -- NEVER
+  # zero-filled, interpolated or imputed to a physiological value.
+  min_coverage:
+    heart_rate: 0.80
+    spo2: 0.80
+    airflow: 0.80
+  min_samples_for_statistics: 2     # mean/median/std/min/max/range/iqr need >= 2 finite
+  min_samples_for_slope: 2          # linear slope needs >= 2 finite, else NULL
+  min_samples_for_zcr: 2            # zero-crossing rate needs >= 2 finite, else NULL
+  # "coverage_fraction" = n_finite / n_expected ; "missing_fraction" = 1 - coverage_fraction.
+  coverage_definition: n_finite_over_n_expected
+  missing_definition: one_minus_coverage_fraction
+
+  # --- expected-sample derivation ---------------------------------------------
+  # n_expected for a window is derived from the per-patient, per-modality
+  # sampling rate inferred from Stage-3 signal_time_ranges
+  # (sample_count / relative_duration_seconds): n_expected = round(duration_s * fs).
+  # Nominal rates below are DOCUMENTATION ONLY (the actual per-patient fs is used).
+  expected_samples_from: stage3_inferred_sampling_rate
+  nominal_sampling_rate_hz:
+    heart_rate: 1.0
+    spo2: 1.0
+    airflow: 2.0
+
+  # --- statistics -------------------------------------------------------------
+  # Common interpretable baseline set for every modality. No black-box embedding,
+  # no deep features, no audio features, no unexplained feature selection.
+  std_ddof: 1                       # sample standard deviation (ddof=1); stated explicitly
+  slope:
+    definition: ordinary_least_squares_slope_of_value_vs_window_time
+    unit: value_per_second
+    require_min_samples: 2
+  airflow:
+    rms:
+      definition: root_mean_square_of_finite_samples
+    zero_crossing:
+      # A zero crossing is a sign change between two consecutive FINITE samples
+      # (a sample exactly equal to 0 is treated as positive; ties across 0 count
+      # as a crossing). rate = zero_crossing_count / window_duration_seconds.
+      definition: consecutive_finite_sample_sign_changes
+      rate_unit: crossings_per_second
+      require_min_samples: 2
+
+  # --- SpO2 optional descriptive desaturation count (OFF by default) ----------
+  # Default OFF: SpO2 carries ONLY the common statistics above. If enabled, an
+  # additional DESCRIPTIVE count of finite SpO2 samples strictly below
+  # threshold_pct is produced. The threshold is a descriptive statistic only; it
+  # is NOT a clinical desaturation/SpO2 diagnosis and uses no undisclosed value.
+  spo2_desaturation:
+    enabled: false
+    threshold_pct: 90.0
+    role: descriptive_count_not_clinical_diagnosis
+
+  # --- physiological range checks (warning only, NEVER clip/repair) ----------
+  # If enabled, samples outside the range only add a quality WARNING; raw values
+  # are never deleted, clipped or "repaired". Range membership is descriptive.
+  physiological_range_warnings:
+    enabled: true
+    heart_rate_bpm: [20, 250]
+    spo2_pct: [50, 100]
+    airflow: unbounded   # Flow_DR is a derived arbitrary-unit signal; no range gate
+
+  # --- audio block (hard) -----------------------------------------------------
+  audio:
+    audio_features_present: false   # hard; every product asserts this is False
+    block_reason: no_trustworthy_audio_time_anchor_unresolved
+    read_wav_forbidden: true
+
+  # --- forbidden downstream steps (this stage does NOT do them) ---------------
+  # No model matrix, no imputation, no normalization/standardization parameters,
+  # no train/val/test split. Those require patient-level in-fold fitting later.
+  no_model_matrix: true
+  no_imputation: true
+  no_normalization: true
+  no_split: true
+
+  # --- versions ---------------------------------------------------------------
+  feature_set_version: physiology_baseline_v1
+  modality_feature_version:
+    heart_rate: hr_v1
+    spo2: spo2_v1
+    airflow: airflow_v1
+  non_clinical_note: >
+    research benchmark input features only; NOT a clinical diagnosis, NOT a PSG
+    replacement; labels are dataset-scored respiratory-event research labels and
+    may overlap with the physiology used to derive these features.

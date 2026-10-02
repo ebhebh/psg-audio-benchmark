@@ -1,0 +1,77 @@
+# =============================================================================
+# Event-type mapping for controlled annotation parsing (Stage 3, prompt 3.2).
+# -----------------------------------------------------------------------------
+# This is a VERSIONED, CONSERVATIVE mapping. It only maps event types that were
+# ACTUALLY OBSERVED in the raw annotation files of this dataset (Stage-2
+# annotation structure inventory). It deliberately does NOT invent obstructive /
+# central / mixed sub-typed apnea labels, because the raw annotations do not
+# encode that distinction and no author confirmation is on record.
+#
+# Evidence basis: the Stage-2 annotation structure audit measured the raw
+# `event_type` values present in data/raw/V5/Data/*/*_annotation.json. Only the
+# two values listed under `observed_raw_types` were observed.
+#
+# Mapping status vocabulary:
+#   mapped                -> a conservative standardized label is assigned
+#   unknown_type          -> raw type not in the observed set; event REJECTED
+#   reserved_placeholder  -> a subtype reserved here for future, but NOT
+#                            generated in this run (no raw evidence)
+# =============================================================================
+
+mapping_version: "3.0.0-stage3"
+mapping_source: >
+  Stage-2 annotation_structure_inventory.csv (raw event_type frequencies),
+  re-measured by the Stage-3 parser directly from data/raw. NOT copied from the
+  literature (which lists obstructive/central/mixed/hypopnea).
+dataset_version: V5
+
+# The ONLY raw event_type values observed in this dataset.
+observed_raw_types:
+  - hypo
+  - osa
+
+# Conservative standardized mapping. Each entry: standardized label + a short
+# statement of what the label does and does NOT claim.
+mapping:
+  hypo:
+    standardized: hypopnea
+    mapping_status: mapped
+    claims: >
+      A scored hypopnea event as labelled in the source annotation. Not sub-typed.
+  osa:
+    # `osa` is mapped to an UNSPECIFIED apnea label, NOT obstructive_apnea.
+    # Without the original annotation codebook or author confirmation, `osa`
+    # cannot be used to distinguish obstructive vs central vs mixed apnea.
+    standardized: apnea_unspecified
+    mapping_status: mapped
+    claims: >
+      A scored apnea event of unspecified subtype. NOT obstructive_apnea, NOT
+      central_apnea, NOT mixed_apnea.
+
+# Reserved placeholders for future explicit mapping. These are intentionally
+# documented but MUST NOT be generated from the current data: no raw event of
+# these types was observed, and the parser will reject any unknown raw type.
+reserved_for_future:
+  central:
+    standardized: central_apnea
+    mapping_status: reserved_placeholder
+    note: "No raw evidence; reserved only."
+  mixed:
+    standardized: mixed_apnea
+    mapping_status: reserved_placeholder
+    note: "No raw evidence; reserved only."
+  obstructive:
+    standardized: obstructive_apnea
+    mapping_status: reserved_placeholder
+    note: >
+      Reserved; `osa` is intentionally NOT mapped here absent codebook evidence.
+
+# Binary candidate label for modelling (future stage). It ONLY flags events that
+# are scored respiratory events OBSERVED in THIS dataset (hypo / osa). It is NOT
+# a clinical diagnosis label and must not be named as such.
+binary_candidate:
+  field: is_any_scored_respiratory_event
+  applies_to_observed_types: [hypo, osa]
+  meaning: >
+      1 iff the event is one of the observed scored respiratory event types
+      (hypo/osa) after conservative standardization; else 0. Not a clinical label.

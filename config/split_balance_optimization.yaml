@@ -1,0 +1,118 @@
+# =============================================================================
+# PSG_Audio_Benchmark - Stage 6B patient-level split BALANCE optimization
+# -----------------------------------------------------------------------------
+# Pre-registered, leakage-safe contract for building a MORE BALANCED patient-level
+# outer split (v2) from the APPROVED Stage-6 v1 core cohort, without training any
+# model. Validated in code (src/psg_audio_benchmark/evaluation/split_balance_config.py);
+# a careless edit that relaxes a hard rule (patient-level, exactly-10-per-fold,
+# fixed seed, no window-random split, audio block, no model matrix / imputation /
+# normalization / resampling / threshold / metrics, never drops patients/windows,
+# never relabels) makes the loader fail.
+#
+# This stage ONLY optimizes patient-level AGGREGATES (per-patient window count /
+# positive count / negative count / positive rate). It reads no raw CSV/WAV, no
+# feature value, and reuses the Stage-6 v1 patient-level burden summary + version
+# signature as its immutable input comparator. The v1 run-dir products are never
+# modified, deleted or overwritten; a v2 result lives in its own isolated run-dir
+# and is mirrored to the fixed paths + LATEST only when the adoption gate passes.
+# =============================================================================
+
+split_balance_optimization:
+  # ---- pinned immutable v1 comparator (READ-ONLY; never modified) ----
+  v1_comparator_run_id: stage6-patient-splits-20260808T002136Z
+  # The v1 outer-test positive-rate spread (computed exactly at runtime from the
+  # v1 outer_patient_folds_core.csv; the value below is the declared comparator,
+  # validated to match the computed value). Pre-registered for the adoption gate.
+  v1_declared_outer_test_pos_rate_spread: 0.17556619642728147
+  v1_declared_window_count_cv: 0.2793
+  # full-cohort reference used for max-absolute positive-rate deviation reporting
+  overall_cohort_positive_rate_reference: 0.2809225528966891
+
+  # ---- cohort identity (must equal the v1 approved core cohort) ----
+  cohort: core_hr_spo2
+  unit: patient
+  expected_core_patients: 50
+  expected_core_windows: 34643
+  expected_core_positive: 9732
+  expected_core_negative: 24911
+
+  # ---- hard constraints (validated in code; cannot be relaxed via YAML) ----
+  outer_n_folds: 5
+  patients_per_outer_fold: 10          # 50 patients -> exactly 10 per outer test fold
+  patient_level_split_required: true
+  allow_window_random_split: false
+  all_windows_of_a_patient_in_one_outer_fold: true
+  no_inter_outer_fold_patient_overlap: true
+  every_outer_train_supports_inner_cv: true   # 40 train patients >= inner_n_folds folds
+  airflow_inherits_core_outer_fold: true
+  independent_airflow_split_forbidden: true
+  inner_cv_built_only_after_outer_approved: true
+
+  # ---- nested inner CV (per outer fold, outer-TRAIN patients only) ----
+  inner_cv:
+    inner_n_folds: 4
+    patients_per_inner_fold: 10         # 40 train patients -> 10 per inner validation fold
+    outer_test_patients_never_in_inner: true
+    balance_target: positive_rate_spread   # soft; patient isolation has priority
+    patient_isolation_priority: highest
+
+  # ---- pre-registered deterministic search algorithm ----
+  search:
+    algorithm: multi_start_balanced_greedy_seed_plus_pairwise_local_swap
+    base_seed: 20250714
+    n_candidate_seeds: 24
+    local_swap_iterations: 40000
+    greedy_seed_sort_key: burden_descending_by_positive_rate   # stratify before greedy
+    selection_rule: lowest_aggregate_objective_then_lowest_spread_then_lowest_wcv_then_lexmin_assignment
+    stop_condition: all_candidate_seeds_consumed_then_no_improving_swap
+
+  # ---- pre-registered objective function + weights (written to resolved config) ----
+  objective:
+    components:
+      - positive_rate_spread          # max - min of per-fold test positive rate
+      - window_count_cv               # std(ddof=0)/mean of per-fold test window count
+    weights:
+      positive_rate_spread: 1.0
+      window_count_cv: 0.5
+    aggregate: weighted_sum           # minimize w1*spread + w2*wcv
+    primary_gate_metric: positive_rate_spread
+
+  # ---- adoption gate (section 2.3 of the prompt); all must hold to approve ----
+  gate:
+    relative_positive_rate_spread_max: 0.10            # hard gate metric
+    require_v2_spread_strictly_below_v1: true
+    # criterion 4: v2 must NOT buy ratio balance with worse window-count imbalance.
+    # v2 window_count_cv must be <= v1 window_count_cv * ceiling (1.0 => v2 must
+    # be no worse than v1 on window balance). Computed v1 cv is used at runtime.
+    v2_window_count_cv_must_not_exceed_v1_times: 1.0
+    require_inner_and_airflow_leakage_checks_pass: true
+    require_all_hard_constraints_pass: true
+
+  # ---- audio is BLOCKED (hard; identical to Stage 6) ----
+  audio:
+    audio_cohort_count: 0
+    audio_features_present: false
+    block_reason: no_trustworthy_audio_time_anchor_unresolved
+    read_wav_forbidden: true
+
+  # ---- nothing downstream is computed (mirrors Stage 6) ----
+  no_model_matrix: true
+  no_imputation: true
+  no_normalization: true
+  no_feature_selection: true
+  no_class_resampling: true
+  no_threshold_optimization: true
+  no_performance_metrics: true
+  no_audio_access: true
+  no_raw_access: true
+  uses_only_pre_model_patient_summaries: true
+  never_drops_patients_or_windows: true
+  never_relabels: true
+
+  # ---- versions ----
+  split_balance_version: split_balance_v2
+  non_clinical_note: >
+    Single public dataset, patient-level INTERNAL validation only (not external
+    validation, not a clinical/deployment claim). Stage 6B only re-partitions the
+    approved Stage-6 core cohort for balance; it trains no model and reads no raw
+    CSV/WAV. Audio remains BLOCKED.

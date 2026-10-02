@@ -1,0 +1,134 @@
+# Stage 9 -- results robustness & sensitivity analysis (core / airflow CSV; NO audio)
+#
+# Pre-registered analysis matrix. This file is resolved BEFORE any analysis runs
+# and is treated as immutable for the run. The analysis set may NOT be added to
+# or removed from mid-run to chase results. Every emitted artifact carries an
+# explicit analysis_role in {primary_replication, sensitivity}.
+#
+# Hard exclusions (enforced in code + tests): reading WAV / audio features,
+# arbitrary threshold / label shopping after seeing results, rewriting the frozen
+# Stage 7/8 primary results, changing the frozen v2 split, random window splits,
+# and any clinical / deployment conclusion.
+
+meta:
+  stage: stage9
+  modeling_version: robustness_sensitivity_v1
+  task_name: robustness and sensitivity analysis of the stage7/8 core/airflow CSV baseline
+  cohort: core_hr_spo2_and_airflow_subcohort
+  split_balance_version: split_balance_v2
+  approval_required: approved_for_modeling
+  non_clinical_note: >-
+    Internal patient-level cross-validation only (retrospective PSG-anchored CSV
+    benchmark). This stage reproduces and stress-tests the FROZEN Stage 7/8
+    results; it does not change them. Sensitivity outputs are NOT primary
+    results and must never replace them. Audio remains BLOCKED; the 34-patient
+    airflow sub-cohort is selective and is NOT extrapolated to the 50-patient
+    main cohort. Not external validation, not clinical/diagnostic/deployment.
+
+gate:
+  require_license_passed: true
+  require_latest_run_v2: true
+  require_approval_status: true
+  reject_v1: true
+  reject_unapproved: true
+  reject_signature_mismatch: true
+  verify_v2_file_sha256: true
+  verify_assignment_sha256: true
+  verify_patient_set_sha256: true
+  verify_lineage_run_ids: true
+  runtime_reverify_cohort: true
+  runtime_reverify_airflow_cohort: true
+  forbidden_hardcode_counts: true
+
+frozen_inputs:
+  # the fixed, read-only Stage 7 / 8 runs whose primary results are stress-tested.
+  # Their run ids / signatures / split hashes are VERIFIED, never trusted blindly.
+  stage7_run_id: stage7-core-csv-baseline-20260808T025258Z
+  stage8_run_id: stage8-airflow-incremental-20260808T033421Z
+  # both must have consumed the SAME frozen v2 split:
+  expected_consumed_split_run_id: stage6b-split-balance-v2-20260808T020039Z
+  expected_assignment_sha256: 350386716471666ea015a5f654f60116a0a108da4ce9b8800389020c9f821806
+  expected_patient_set_sha256: 5b23c36f9704933fd0e8f55909864ed2e998464685346c45dcd7f14b19757a7a
+
+nested_cv:   # inherited from the frozen runs; never re-split, never random window
+  outer_n_folds: 5
+  inner_n_folds: 4
+  unit: patient
+  inherits_split: true
+  rebuilds_split: false
+  window_random_split: false
+
+analyses:
+  # 2.1 -- primary reproduction from the FROZEN OOF (no model/threshold re-selection)
+  primary_reproduction:
+    enabled: true
+    pooled_metric_abs_tol: 1.0e-12
+    rerun_oof_abs_tol_lr: 1.0e-9     # regenerated outer-test OOF vs frozen (LR; near-exact)
+    rerun_oof_abs_tol_hgb: 1.0e-6    # HGB may show tiny float drift; reported, not a hard block
+  # 2.2 -- patient weighting & uncertainty
+  patient_weight_uncertainty:
+    enabled: true
+    bootstrap_unit: patient
+    n_resamples: 1000
+    seed: 20250714
+    ci_level: 0.95
+    forbid_window_iid: true
+    resample_bring_all_windows: true
+    report_per_outer_fold_paired_delta: true
+    metrics_threshold_free: [auroc, auprc, brier]
+    metrics_threshold_based: [sensitivity, specificity, f1, balanced_accuracy]
+  # 2.3 -- classification threshold sensitivity (threshold-free metrics MUST be invariant)
+  threshold_sensitivity:
+    enabled: true
+    primary_rule: inner_oof_max_youden_j   # unchanged main rule
+    descriptive_rules: [fixed_0_5, inner_oof_balanced_accuracy_max]
+    fit_from: inner_oof_validation_predictions
+    never_fit_from: outer_test
+  # 2.4 -- probability calibration sensitivity (LR only; calibrator fit on inner-train only)
+  calibration_sensitivity:
+    enabled: true
+    apply_to: [stage7_core_logistic_regression,
+               stage8_core_restricted_logistic_regression,
+               stage8_airflow_enhanced_logistic_regression]
+    methods: [sigmoid_platt, isotonic]
+    fit_from: inner_oof_validation_predictions   # outer-train inner OOF, never outer-test
+    isotonic_min_pos_per_inner_fold: 5
+    isotonic_min_neg_per_inner_fold: 5
+    calibration_bins: 10
+    compare_metrics: [brier, log_loss, calibration_intercept, calibration_slope, ece]
+    do_not_reselect_model: true
+  # 2.5 -- class-weight sensitivity (LR only; re-selected per inner CV, never on outer-test)
+  class_weight_sensitivity:
+    enabled: true
+    model: logistic_regression
+    variants: [none, balanced]
+  # 2.6 -- selective airflow sub-cohort transparency (34 patients; NOT extrapolated to 50)
+  airflow_selection_profile:
+    enabled: true
+    subcohort_patients: 34
+    do_not_extrapolate_to_main_cohort: true
+  # 3.0 -- alternative label definition (structured events only; NO WAV; NO change to main label)
+  alternative_label:
+    enabled: true
+    definition: event_duration_interval_overlaps_window_by_at_least_min_event_overlap_seconds
+    min_event_overlap_seconds: 1.0
+    same_window_membership_as_primary: true
+    same_frozen_split: true
+    mirror_awake_setaside: true
+    models: [logistic_regression, hist_gradient_boosting]
+    max_single_class_patient_fraction: 0.2   # above this the branch is not_interpretable -> NA
+    do_not_use_to_select_better_main_label: true
+
+isolation:
+  read_wav_forbidden: true
+  audio_products_forbidden: true
+  airflow_in_core_model_forbidden: true
+  snapshot_raw_before_after: true
+  historical_products_unchanged: true
+  primary_results_read_only: true
+  output_run_dir_isolated: true
+
+output:
+  run_id_prefix: stage9-robustness-sensitivity-
+  figure_max_count: 6
+  oof_pseudonymize: true

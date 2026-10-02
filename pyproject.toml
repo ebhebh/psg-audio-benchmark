@@ -1,0 +1,62 @@
+# =============================================================================
+# psg-audio-benchmark — code release candidate for the BMC Medical Informatics
+# and Decision Making submission.
+# -----------------------------------------------------------------------------
+# STATUS: LOCAL_CANDIDATE_NOT_PUBLISHED. License NOT yet chosen (see
+# LICENSE_DECISION_REQUIRED.md); the `license` field below intentionally stays
+# unresolved until the authors select one.
+# =============================================================================
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psg-audio-benchmark"
+version = "1.0.0rc1"
+description = "Leakage-safe patient-level benchmark of HR+SpO2 (and airflow secondary) window classification for PSG-scored respiratory events on the public Tao et al. 2025 multimodal sleep apnea dataset."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "TBD — LICENSE_DECISION_REQUIRED (candidates: MIT / BSD-3-Clause); do not redistribute until resolved" }
+authors = [{ name = "PSG_Audio_Benchmark authors (see AUTHORS in the manuscript)" }]
+keywords = ["sleep apnea", "PSG", "benchmark", "nested cross-validation", "leakage control"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "scipy>=1.11",
+    "scikit-learn>=1.3",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+# Optional: only needed when the staged download arrives as 7z archives or when
+# audio-file metadata probing is requested (audio analysis is BLOCKED in this
+# release; these packages are lazily imported and availability-checked).
+optional_io = [
+    "py7zr>=0.20",
+    "soundfile>=0.12",
+]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+psgb-setup-check = "psg_audio_benchmark.__main__:main"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra -q"
+filterwarnings = [
+    "error::DeprecationWarning:psg_audio_benchmark.*",
+]

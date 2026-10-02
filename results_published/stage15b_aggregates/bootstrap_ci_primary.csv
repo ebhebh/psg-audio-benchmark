@@ -1,0 +1,3 @@
+run_id,model,metric,point_estimate,ci_low,ci_high,n_resamples,n_used,n_single_class_skipped,ci_level,unit
+stage15b-bspc-reanalysis-20260808T160452Z,hr_spo2_lr,auroc,0.8234101823808062,0.7868204527912493,0.8542319937845452,1000,1000,0,0.95,patient
+stage15b-bspc-reanalysis-20260808T160452Z,hr_spo2_lr,auprc,0.7030355197357914,0.6162867885181329,0.7817387557121416,1000,1000,0,0.95,patient

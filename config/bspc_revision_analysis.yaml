@@ -1,0 +1,224 @@
+# =============================================================================
+# Stage 15 — BSPC pre-submission REVISION analysis registration (frozen BEFORE
+# any re-run).  This is a *pre-submission revision registration*, NOT a claim of
+# an original prospective pre-registration of the Stage 2-14 work.
+# -----------------------------------------------------------------------------
+# Authority chain (in order):
+#   1. the frozen Stage 3 parsed events + canonical awake intervals + Stage 4
+#      window/time contract (never overwritten; old Stage 4 stays byte-identical)
+#   2. the frozen, approved v2 patient-level split (never rebuilt)
+#   3. THIS file (frozen before any Stage 15b run; changed only with a new run id)
+#
+# Hard rules (mirror Stage 7-9 discipline):
+#   * patient-level nested CV on the INHERITED v2 split; no window-random split,
+#     no patient crossing an outer fold, no outer-test patient in any inner fold.
+#   * every imputer / scaler / class weight / threshold / hyper-point is fitted
+#     ONLY on the matching outer/inner TRAIN partition. Outer-test never selects.
+#   * the main label, main model, main lag, main metric and indeterminate rule
+#     below are fixed BEFORE any result is seen; they are never edited to chase
+#     a better number. Sensitivity branches are reported as such, never promoted
+#     to primary by outer-test score.
+#   * audio stays BLOCKED (0 eligible windows); airflow is a shared-source /
+#     incorporation-risk secondary analysis only; neither enters the main claim.
+#   * no clinical diagnosis / OSA patient diagnosis / PSG replacement / real-time
+#     / screening claim; the task is window-level PSG-scored respiratory-event
+#     classification.
+# =============================================================================
+
+meta:
+  stage: stage15b
+  registration_kind: "pre-submission revision registration (NOT a prospective original pre-registration)"
+  registered_before_any_rerun: true
+  frozen_utc: "2026-08-08T15:42:29Z"
+  seed: 20250714
+  task_name: "window-level PSG-scored respiratory-event classification (revision)"
+  non_clinical_note: >
+    Single public dataset, patient-level INTERNAL cross-validation only. Not a
+    clinical diagnosis, not OSA patient diagnosis, not PSG replacement, not
+    real-time/deployable, not screening. HGB is exploratory only. Audio BLOCKED.
+
+provenance_gate:
+  require_license_passed: true
+  license_passed_relpath: reports/data_audit/license_gate_passed.md
+  split_run: stage6b-split-balance-v2-20260808T020039Z
+  require_approval_status: approved_for_modeling
+  reject_v1: true
+  reject_unapproved: true
+  outer_assignment_source: splits/outer_patient_folds_core_v2.csv
+  inner_assignment_source: splits/inner_patient_folds_core_v2.parquet
+  events_source: annotations/parsed_events.parquet            # Stage 3 frozen
+  cohort_membership_source: splits/core_cohort_window_membership.parquet
+  features_hr: features/physiology/hr_window_features.parquet
+  features_spo2: features/physiology/spo2_window_features.parquet
+  features_airflow: features/physiology/airflow_window_features.parquet
+  do_not_overwrite_old_stage4: true
+
+# ---------------------------------------------------------------------------
+# Window / time contract (identical to Stage 4; re-derived here for labeling).
+# ---------------------------------------------------------------------------
+window:
+  length_s: 30.0
+  hop_s: 30.0
+  boundary: half_open_start_inclusive_end_exclusive   # [start, end)
+  coordinate: relative_to_record_start
+  candidate_domain: core_signal_intersection_hr_spo2
+  require_complete_core_coverage: true
+  awake_exclusion: { max_awake_overlap_fraction: 0.0 }   # any awake overlap excludes
+
+# ---------------------------------------------------------------------------
+# LABEL protocol (the core revision). All variants derived from the SAME frozen
+# retained events (non-awake scored respiratory events) + same Stage-4 windows.
+# Indeterminate windows are EXCLUDED from main train/eval; never forced either way.
+# ---------------------------------------------------------------------------
+labels:
+  retained_events_filter:
+    is_any_scored_respiratory_event: true
+    overlaps_awake_interval: false          # awake-overlap events set aside (destiny)
+  event_interval_fields:
+    start: event_start_relative_to_record_start
+    end: event_end_relative_to_record_start
+    duration: event_duration_seconds
+  overlap_definition: >
+    overlap_seconds(window, event) = max(0, min(window_end, event_end)
+    - max(window_start, event_start))  (half-open interval intersection, seconds).
+  variants:
+    main:                         # PRIMARY, fixed before any rerun
+      name: overlap_ge_10s
+      rule: positive if overlap_seconds >= 10.0; indeterminate if 0 < overlap < 10; negative if overlap == 0
+      rationale: >=10 s is at/above the AASM minimum respiratory-event duration and the ChatGPT-recommended threshold; chosen before results.
+      indeterminate_policy: exclude_from_main_train_and_eval
+    sensitivity_onset:           # continuity with the historical Stage-4 start-point label
+      name: event_start_point_half_open
+      rule: positive iff the retained event START point lies in [window_start, window_end)
+      indeterminate_policy: none
+    sensitivity_any:
+      name: any_overlap
+      rule: positive if overlap_seconds > 0; negative otherwise
+      indeterminate_policy: none
+    sensitivity_cov50:
+      name: coverage_ge_50pct
+      rule: positive if overlap_seconds >= 0.5 * window_length_s (>=15 s); indeterminate if 0 < overlap < 15; negative if 0
+      indeterminate_policy: exclude_from_main_train_and_eval
+  onset_label_must_match_stage4: true   # sanity: onset variant reproduces Stage-4 label exactly
+
+# ---------------------------------------------------------------------------
+# Feature families (pre-registered). All fold-internally imputed (median) + scaled.
+# ---------------------------------------------------------------------------
+features:
+  statistics: [mean, median, std_ddof1, min, max, range, iqr, slope_per_second]
+  airflow_extra_statistics: [rms, zero_crossing_count, zero_crossing_rate]
+  families:
+    hr_only:        [hr_mean, hr_median, hr_std_ddof1, hr_min, hr_max, hr_range, hr_iqr, hr_slope_per_second]
+    spo2_only:      [spo2_mean, spo2_median, spo2_std_ddof1, spo2_min, spo2_max, spo2_range, spo2_iqr, spo2_slope_per_second]
+    hr_spo2:        [hr_only + spo2_only]            # PRIMARY feature family (14 columns)
+    simple_spo2_min: [spo2_min]                       # simple baseline (univariate)
+  forbidden_as_features: [ids, time, quality_coverage, modal_availability, label, annotation, awake, sleep, audio, full_cohort_fit]
+  join_key: window_id
+
+# ---------------------------------------------------------------------------
+# Models (fixed roles; no outer-test champion selection).
+# ---------------------------------------------------------------------------
+models:
+  dummy_prior:           { role: lower_bound, estimator: DummyClassifier(strategy=prior), threshold: fixed_0.5 }
+  simple_spo2_min_lr:    { role: simple_baseline, estimator: univariate LR on spo2_min, pipeline: SimpleImputer(median)->StandardScaler->LR, threshold: inner_oof_max_youden_j }
+  hr_only_lr:            { role: comparator, pipeline: SimpleImputer(median)->StandardScaler->LR, grid: {C:[0.1,1,10], class_weight:[null,balanced]}, threshold: inner_oof_max_youden_j }
+  spo2_only_lr:          { role: comparator, pipeline: SimpleImputer(median)->StandardScaler->LR, grid: {C:[0.1,1,10], class_weight:[null,balanced]}, threshold: inner_oof_max_youden_j }
+  hr_spo2_lr:            { role: PRIMARY, pipeline: SimpleImputer(median)->StandardScaler->LR, grid: {C:[0.1,1,10], class_weight:[null,balanced]}, threshold: inner_oof_max_youden_j }
+  hr_spo2_hgb:           { role: exploratory, pipeline: SimpleImputer(median)->HistGradientBoostingClassifier, grid: {learning_rate:[0.05,0.10], max_leaf_nodes:[15,31]}, threshold: inner_oof_max_youden_j }
+  lr_fixed_params: { solver: lbfgs, max_iter: 2000, random_state: 20250714 }
+  hgb_fixed_params: { random_state: 20250714, early_stopping: false, loss: log_loss }
+
+# ---------------------------------------------------------------------------
+# Nested CV (INHERITED v2 split; never rebuilt).
+# ---------------------------------------------------------------------------
+nested_cv:
+  outer_n_folds: 5
+  inner_n_folds: 4
+  unit: patient
+  inherits_split: true
+  rebuilds_split: false
+  selection: { primary_score: average_precision, tie_break: [higher_auroc, ascending_grid_index], ap_tolerance: 1.0e-9 }
+  threshold: { rule: inner_oof_max_youden_j, tie_break: lowest_probability, never_fit_from: outer_test, dummy: 0.5 }
+
+# ---------------------------------------------------------------------------
+# Physiological latency (SpO2 desaturation typically LAGS the respiratory event).
+# lag = +L means the FEATURE context is shifted +L s relative to the LABEL window
+# (i.e. uses signal from L..L+30 s after the window start). +L > 0 uses FUTURE
+# signal relative to the event -> OFFLINE / context sensitivity, never real-time.
+# The main analysis uses lag 0 (causal / online). Branches are never promoted by
+# outer-test performance.
+# ---------------------------------------------------------------------------
+latency:
+  branches:
+    lag_0:        { shift_s: 0,  kind: causal_online, role: MAIN }
+    lag_plus_30:  { shift_s: 30, kind: offline_context, role: sensitivity }
+    lag_plus_60:  { shift_s: 60, kind: offline_context, role: sensitivity }
+  shift_unit: one_window_step   # +30 s = next window; +60 s = window after next
+  missing_shifted_window_policy: drop_from_branch_and_report   # end-of-recording tails
+
+# ---------------------------------------------------------------------------
+# Metrics & uncertainty.
+# ---------------------------------------------------------------------------
+evaluation:
+  window_metrics: [auroc, auprc, brier, log_loss, sensitivity, specificity, precision, f1, balanced_accuracy]
+  patient_macro:
+    compute: true
+    per_patient_metrics: [auroc, auprc]
+    include_policy: only_patients_with_both_classes_in_oof
+    report_na_reason: true
+    never_conflate_with_window_macro: true
+  event_level:
+    compute_on_models: [hr_spo2_lr, simple_spo2_min_lr]
+    candidate_event_rule: maximal_run_of_adjacent_positive_windows   # at the chosen threshold
+    gt_events: retained_non_awake_scored_events
+    match_rule: candidate_interval_overlaps_gt_interval   # intersection > 0
+    report: [event_sensitivity, event_precision, event_f1, false_positives_per_hour, n_gt_events, n_candidate_events]
+    not_patient_diagnosis: true
+  calibration:
+    report: [brier, calibration_intercept, calibration_slope, reliability_10_bins]
+    note: internal calibration sensitivity; not clinical/deployment calibration
+  uncertainty:
+    bootstrap:
+      enabled: true
+      unit: patient                      # patient-cluster, NEVER window IID
+      n_resamples: 1000
+      seed: 20250714
+      ci_method: percentile
+      ci_level: 0.95
+      skip_single_class_resamples: true
+    paired_bootstrap:                    # model-to-model and airflow increment
+      enabled: true
+      unit: patient
+      n_resamples: 1000
+      seed: 20250714
+      comparisons:
+        - hr_spo2_lr_vs_hr_only_lr
+        - hr_spo2_lr_vs_spo2_only_lr
+        - hr_spo2_lr_vs_simple_spo2_min_lr
+        - hgb_vs_lr_exploratory
+  primary_result_metric: pooled_auroc_hr_spo2_lr_main_label_lag0
+
+# ---------------------------------------------------------------------------
+# Airflow secondary analysis (shared source / incorporation risk).
+# ---------------------------------------------------------------------------
+airflow_secondary:
+  cohort: 34-patient selective sub-cohort (HR+SpO2+airflow all available), inherits v2 folds
+  comparison: airflow_enhanced_lr MINUS core_restricted_lr, same windows, paired patient bootstrap
+  role: shared_source_construct_upper_bound
+  placement: supplementary_only
+  not_in_abstract_main_result: true
+
+# ---------------------------------------------------------------------------
+# Output isolation (mirror prior stages; never overwrite Stage 2-14).
+# ---------------------------------------------------------------------------
+output:
+  run_id_prefix: stage15b-bspc-reanalysis-
+  run_dir_isolated: true
+  results: results/runs/<run_id>
+  models: models/runs/<run_id>
+  reports: reports/modeling/runs/<run_id>
+  historical_products_unchanged: true
+  read_wav_forbidden: true
+  audio_products_forbidden: true
+  path_purity_forbidden_tokens: [pytest, Temp, AppData]
+  oof_pseudonymize: true

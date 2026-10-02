@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "Please cite this software and the original dataset (DOI 10.57760/sciencedb.19070, V5). The associated manuscript is not yet published."
+title: "psg-audio-benchmark: patient-level benchmarking of HR and SpO2 respiratory-event windows"
+type: software
+authors:
+  - family-names: Meng
+    given-names: Xiangming
+    orcid: "https://orcid.org/0000-0001-8250-9887"
+  - family-names: Cai
+    given-names: Mingjing
+license: MIT
+version: "1.0.0rc1"
+keywords:
+  - sleep apnea
+  - polysomnography
+  - nested cross-validation
+  - reproducibility
+repository-code: "https://github.com/ebhebh/psg-audio-benchmark"

@@ -1,0 +1,78 @@
+# =============================================================================
+# PSG_Audio_Benchmark - path configuration
+# -----------------------------------------------------------------------------
+# RULES (enforced by src/psg_audio_benchmark/config.py):
+#   - Every path below MUST be relative to the project root.
+#   - No absolute paths (no "C:\\", "D:\\" or leading "/") are allowed.
+#   - No path may escape the project root (no "../" traversal above root).
+#   - The project root is resolved from the location of the
+#     src/psg_audio_benchmark/ package (auto), or from the PSG_BENCHMARK_ROOT
+#     environment variable. It is NEVER hardcoded to a user absolute path.
+#   - raw data is strictly read-only.
+# =============================================================================
+
+project_root:
+  resolution: auto_from_src_package
+  env_override: PSG_BENCHMARK_ROOT
+  note: >
+    Resolved at runtime from the src/psg_audio_benchmark/ package location.
+    Do not edit this to a machine-specific absolute path.
+
+# Declaration of intent: original patient data must never be modified, moved,
+# overwritten or cleaned by any pipeline stage.
+raw_data_read_only: true
+
+# All paths are RELATIVE to project_root.
+paths:
+  config: config
+
+  data: data
+  data_raw: data/raw
+  data_external: data/external
+  data_external_incoming: data/external/incoming
+  data_external_extracted: data/external/incoming/extracted
+  data_interim: data/interim
+  data_processed: data/processed
+  data_manifests: data/manifests
+
+  annotations: annotations
+
+  features: features
+  features_audio: features/audio
+  features_physiology: features/physiology
+  features_multimodal: features/multimodal
+
+  splits: splits
+
+  models: models
+  models_baseline_ml: models/baseline_ml
+  models_deep_learning: models/deep_learning
+  models_pretrained_embeddings: models/pretrained_embeddings
+
+  results: results
+  results_metrics: results/metrics
+  results_predictions: results/predictions
+  results_calibration: results/calibration
+  results_error_analysis: results/error_analysis
+  results_cross_device: results/cross_device
+
+  figures: figures
+  tables: tables
+
+  reports: reports
+  reports_data_audit: reports/data_audit
+  reports_annotations: reports/annotations
+  reports_data_download: reports/data_download
+  reports_windowing: reports/windowing
+  reports_feature_extraction: reports/feature_extraction
+  reports_evaluation: reports/evaluation
+  reports_leakage_audit: reports/leakage_audit
+  reports_model_audit: reports/model_audit
+  reports_modeling: reports/modeling
+  reports_manuscript_outputs: reports/manuscript_outputs
+
+  logs: logs
+  notebooks: notebooks
+  scripts: scripts
+  src: src
+  docs: docs

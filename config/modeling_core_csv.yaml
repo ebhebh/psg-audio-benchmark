@@ -1,0 +1,258 @@
+# =============================================================================
+# Stage 7 - Core-CSV (HR + SpO2) traditional-model nested-CV baseline config.
+# -----------------------------------------------------------------------------
+# This file is the PRE-REGISTERED source of truth for the core-CSV modeling
+# baseline. Every model family, hyper-parameter grid, random seed, the feature
+# whitelist, the inner-selection rule and the threshold rule are declared here
+# and copied verbatim (as a resolved YAML + run metadata) into every run-dir.
+#
+# Hard rules (mirror the Stage 1-6B discipline and the Stage-7 prompt):
+#   * Consumes ONLY the frozen, approved v2 patient split. v1 / unapproved /
+#     signature-mismatched splits are rejected -- never a silent fallback.
+#   * Patient-level nested CV: 5 outer folds x 4 inner folds. No window random
+#     split, no patient crosses an outer fold, no outer-test patient in any
+#     inner fold. The split is INHERITED, never rebuilt.
+#   * Features are ONLY the whitelisted HR/SpO2 window statistics. IDs, time,
+#     quality/coverage, modal-availability, labels, annotation, awake, sleep
+#     stage, airflow and audio NEVER enter the estimator.
+#   * Every preprocessor / class weight / hyper-parameter / threshold is fitted
+#     ONLY on the matching outer/inner TRAIN partition. Outer-test never
+#     participates in inner selection or threshold choice.
+#   * task = "window-level dataset-scored respiratory-event baseline"; NOT a
+#     clinical diagnosis, NOT PSG replacement, NOT deployable. Audio BLOCKED.
+# =============================================================================
+
+meta:
+  stage: stage7
+  task_name: "window-level dataset-scored respiratory-event baseline"
+  cohort: core_hr_spo2
+  split_balance_version: split_balance_v2
+  non_clinical_note: >
+    Single public dataset, patient-level INTERNAL cross-validation only
+    (retrospective PSG-anchored CSV benchmark; not external validation, not a
+    clinical/diagnostic/deployment claim). HGB is exploratory only and is never
+    declared the winner by outer-test score. Results must NOT be generalized to
+    audio; audio remains BLOCKED.
+
+# ---------------------------------------------------------------------------
+# Input provenance gate (enforced in code; declared here for reproducibility).
+# ---------------------------------------------------------------------------
+gate:
+  require_license_passed: true
+  license_passed_relpath: reports/data_audit/license_gate_passed.md
+  require_latest_run_v2: true           # splits/LATEST_RUN.txt must be the v2 run
+  require_approval_status: approved_for_modeling
+  reject_v1: true
+  reject_unapproved: true
+  reject_signature_mismatch: true
+  verify_v2_file_sha256: true           # outer/inner/signature file digests
+  verify_assignment_sha256: true        # recompute, compare to signature
+  verify_patient_set_sha256: true
+  verify_lineage_run_ids: true          # stage4/5 run ids vs file run_id columns
+  runtime_reverify_cohort: true         # recompute counts; compare to signature
+  # Expected cohort fingerprint is read FROM THE SIGNATURE at runtime, never
+  # hard-coded here (the signature is the frozen authority).
+  forbidden_hardcode_counts: true
+
+# ---------------------------------------------------------------------------
+# Feature whitelist (ALLOW-list). Only these prefixed columns may enter the
+# estimator. Everything else is rejected by feature_assembly.
+# ---------------------------------------------------------------------------
+features:
+  modalities: [heart_rate, spo2]
+  prefix:
+    heart_rate: hr_
+    spo2: spo2_
+  statistics: [mean, median, std_ddof1, min, max, range, iqr, slope_per_second]
+  join_key: window_id
+  forbid_categories:
+    - ids                 # window_id, patient_id, window_index, run_id, modality_feature_version
+    - time                # window_start/end_relative_to_record_start, duration_seconds
+    - quality_coverage    # n_expected, n_observed, n_finite, coverage_fraction, missing_fraction, quality_status, quality_warnings
+    - modal_availability  # modality, audio_features_present, core_hr_spo2_available, hr_available...
+    - label               # binary_event_label, label_status, exclusion_reason, n_linked_retained_events
+    - annotation          # annotation, event_type_*
+    - awake               # awake_overlap_fraction
+    - sleep               # sleep_structure_observational_status
+    - airflow             # any airflow-derived statistic / coverage flag
+    - audio               # any audio field (audio BLOCKED)
+    - full_cohort_fit     # any variable fitted on the whole cohort
+  forbidden_columns:
+    - window_id
+    - patient_id
+    - window_index
+    - run_id
+    - modality
+    - modality_feature_version
+    - window_start_relative_to_record_start
+    - window_end_relative_to_record_start
+    - start_relative_to_record_start
+    - end_relative_to_record_start
+    - start_absolute_cumulative_seconds
+    - end_absolute_cumulative_seconds
+    - duration_seconds
+    - audio_features_present
+    - n_expected
+    - n_observed
+    - n_finite
+    - coverage_fraction
+    - missing_fraction
+    - quality_status
+    - quality_warnings
+    - value_unit
+    - binary_event_label
+    - label_status
+    - exclusion_reason
+    - n_linked_retained_events
+    - awake_overlap_fraction
+    - sleep_structure_observational_status
+    - has_airflow_coverage
+    - airflow_available
+    - cohort_airflow
+    - core_coverage_complete
+    - core_heart_rate_coverage
+    - core_spo2_coverage
+
+# ---------------------------------------------------------------------------
+# Label definition.
+# ---------------------------------------------------------------------------
+label:
+  column: binary_event_label
+  values: {negative: 0, positive: 1}
+  source: stage4_window_index
+  note: "dataset-scored respiratory-event research label; NOT a clinical diagnosis."
+
+# ---------------------------------------------------------------------------
+# Nested CV structure (INHERITED from the frozen v2 split; never rebuilt).
+# ---------------------------------------------------------------------------
+nested_cv:
+  outer_n_folds: 5
+  inner_n_folds: 4
+  patients_per_outer_fold: 10
+  unit: patient
+  inherits_split: true
+  rebuilds_split: false
+  window_random_split: false
+  outer_assignment_source: splits/outer_patient_folds_core_v2.csv
+  inner_assignment_source: splits/inner_patient_folds_core_v2.parquet
+
+# ---------------------------------------------------------------------------
+# Pre-specified model families. All probabilistic models use the SAME v2 split;
+# NO model is picked by outer-test score.
+# ---------------------------------------------------------------------------
+models:
+  dummy_prior:
+    class: sklearn.dummy.DummyClassifier
+    params:
+      strategy: prior
+    tunable: false
+    threshold_rule: fixed_0.5
+    threshold_note: "Dummy uses a fixed 0.5 threshold (distinct from data-driven Youden)."
+
+  logistic_regression:
+    role: primary
+    class: sklearn.linear_model.LogisticRegression
+    pipeline:
+      - {class: sklearn.impute.SimpleImputer, params: {strategy: median}}
+      - {class: sklearn.preprocessing.StandardScaler, params: {}}
+      - {class: sklearn.linear_model.LogisticRegression,
+         params: {solver: lbfgs, max_iter: 2000, random_state: 20250714}}
+    param_grid:
+      logisticregression__C: [0.1, 1.0, 10.0]
+      logisticregression__class_weight: [null, balanced]
+    fixed:
+      solver: lbfgs
+      max_iter: 2000
+      random_state: 20250714
+    tunable: true
+    threshold_rule: inner_oof_max_youden_j
+
+  hist_gradient_boosting:
+    role: exploratory
+    class: sklearn.ensemble.HistGradientBoostingClassifier
+    pipeline:
+      - {class: sklearn.impute.SimpleImputer, params: {strategy: median}}
+      - {class: sklearn.ensemble.HistGradientBoostingClassifier,
+         params: {random_state: 20250714, early_stopping: false}}
+    param_grid:
+      histgradientboostingclassifier__learning_rate: [0.05, 0.10]
+      histgradientboostingclassifier__max_leaf_nodes: [15, 31]
+    fixed:
+      random_state: 20250714
+      early_stopping: false
+      l2_regularization: 0.0
+      loss: log_loss
+    sample_weight_from: train_labels_only   # never validation/test labels
+    tunable: true
+    threshold_rule: inner_oof_max_youden_j
+
+# ---------------------------------------------------------------------------
+# Inner model-selection rule (single pre-registered rule for all tunable models).
+# ---------------------------------------------------------------------------
+selection:
+  primary_score: average_precision
+  tie_break_order:
+    - higher_auroc
+    - simpler_candidate
+  average_precision_tolerance: 1.0e-9
+  simpler_candidate_order: ascending_grid_index   # deterministic lexical order
+  record_all_candidates: true
+  refit_on_full_outer_train: true
+  predict_outer_test_once: true
+
+# ---------------------------------------------------------------------------
+# Threshold rule (for threshold-dependent metrics only).
+# ---------------------------------------------------------------------------
+threshold:
+  data_driven_rule: inner_oof_max_youden_j  # max(TPR - FPR) on inner OOF proba
+  tie_break: lowest_probability_then_grid_order
+  fit_from: inner_oof_validation_predictions  # selected candidate, outer-train only
+  never_fit_from: outer_test
+  dummy_fixed_value: 0.5
+
+# ---------------------------------------------------------------------------
+# Evaluation, aggregation, uncertainty.
+# ---------------------------------------------------------------------------
+evaluation:
+  pooled_oof: true
+  threshold_free_metrics: [auroc, auprc, brier, log_loss]
+  threshold_based_metrics: [sensitivity, specificity, precision, f1, balanced_accuracy, confusion_matrix]
+  single_class_policy: na_with_reason        # never crash, never fake a 0
+  bootstrap:
+    enabled: true
+    unit: patient                            # patient-CLUSTER bootstrap (NOT window IID)
+    n_resamples: 1000
+    seed: 20250714
+    resample_bring_all_windows: true
+    skip_single_class_resamples: true
+    report_skipped_count: true
+    ci_method: percentile
+    ci_level: 0.95
+    apply_to: [logistic_regression]          # main model only
+    forbid_window_iid: true
+  figures:
+    max_count: 5
+    requested: [oof_roc, oof_pr, calibration, patient_fold_results, confusion_matrix]
+    calibration_bins: 10
+    mandatory_disclaimers:
+      - "internal patient-level cross-validation"
+      - "retrospective PSG-anchored CSV benchmark"
+      - "not for clinical deployment"
+
+# ---------------------------------------------------------------------------
+# Output isolation / immutability (mirror prior stages).
+# ---------------------------------------------------------------------------
+output:
+  run_id_prefix: stage7-core-csv-baseline-
+  run_dir_isolated: true
+  mirror_on_success:
+    - {src: models/runs/<run_id>, latest: models/LATEST_RUN.txt}
+    - {src: results/runs/<run_id>, latest: results/LATEST_RUN.txt}
+  snapshot_raw_before_after: true
+  historical_products_unchanged: true
+  read_wav_forbidden: true
+  audio_products_forbidden: true
+  airflow_in_core_model_forbidden: true
+  path_purity_forbidden_tokens: [pytest, Temp, AppData]
+  oof_pseudonymize: true                     # only relative/pseudo keys, never raw feature values
+  oof_forbidden: [feature_values, raw_csv_values, absolute_paths, audio, identifiable_info]

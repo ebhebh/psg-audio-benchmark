@@ -1,0 +1,198 @@
+# =============================================================================
+# PSG_Audio_Benchmark - main configuration
+# -----------------------------------------------------------------------------
+# This file declares project identity, dataset metadata, windowing/labeling
+# placeholders and the hard scientific constraints of the study.
+# Stage 0 only RECORDS these decisions; it does not download data, parse
+# annotations, build windows, extract features or train models.
+#
+# Hard constraints are ALSO enforced in code
+# (src/psg_audio_benchmark/config.py:IMMUTABLE_CONSTRAINTS). The YAML block
+# below is declarative; if it ever disagrees with the code constants, the
+# loader raises a ConfigError rather than silently relaxing the rule.
+# =============================================================================
+
+project_name: PSG_Audio_Benchmark
+study_title: >
+  Leakage-Safe Cross-Device Benchmarking of Bedside Audio and Multimodal
+  Physiological Signals for PSG-Annotated Sleep Apnea Event Detection
+study_type: public_dataset_secondary_analysis_benchmark
+non_clinical_boundary: >
+  This is a public-dataset benchmark study. It is NOT a clinically deployable
+  diagnostic system, NOT a PSG replacement, NOT an external clinical validation,
+  and NOT an upper-airway obstruction localization model.
+
+project_root:
+  resolution: auto_from_src_package
+  description: >
+    Derived from the src/psg_audio_benchmark/ package location at runtime.
+    Never hardcoded to a developer absolute path (no D:\\, C:\\).
+
+random_seed: 20250714
+timezone: Asia/Shanghai
+
+# ---------------------------------------------------------------------------
+# Dataset identity (recorded now; verified later in the data-audit stage).
+# Literature-reported numbers are HYPOTHESES pending download audit and must
+# not be treated as confirmed.
+# ---------------------------------------------------------------------------
+dataset:
+  primary:
+    name: "Tao et al. 2025 - A multimodal dataset for training deep learning models aimed at detecting and analyzing sleep apnea"
+    paper_doi: "10.1038/s41597-025-05583-8"
+    data_doi: "10.57760/sciencedb.19070"
+    version: "TBD_AFTER_DOWNLOAD_AUDIT"
+    access_date: "TBD"
+    license: "TBD_AFTER_AUDIT"
+    literature_reported:
+      n_patients: 50            # hypothesis, not confirmed
+      total_hours: 400          # hypothesis, not confirmed
+      modalities:
+        smartphone_audio: "reported OPPO Reno8, stereo, 48 kHz"
+        recorder_audio: "reported Newamy V03, mono, 16 kHz; possibly TWO segments per patient"
+        spo2: "reported 1 Hz"
+        heart_rate: "reported 1 Hz"
+        airflow: "reported 1 Hz, subset only (literature ~36/50)"
+        sleep_architecture: "reported present"
+        psg_aasm_annotations: "reported present"
+      event_types:
+        - obstructive_apnea
+        - central_apnea
+        - mixed_apnea
+        - hypopnea
+    note: >
+      All reported sampling rates, channel counts, durations and patient counts
+      must be confirmed against real files during the data-audit stage before
+      any parser hardcodes them.
+  background:
+    name: "PSG-Audio (Korompili et al. 2021)"
+    doi: "10.11922/sciencedb.00345"
+    role: background_reference_only
+    must_not_mix_with_primary: true
+    note: >
+      A DIFFERENT dataset (212 records, tracheal/environment microphones,
+      EDF/RML). It MUST NOT be mixed with the primary dataset in any manifest,
+      file-format assumption, patient count, sampling rate, label or result.
+
+# ---------------------------------------------------------------------------
+# Windowing / labeling (placeholders; parsing happens in a later stage).
+# ---------------------------------------------------------------------------
+windowing:
+  main_window_s: 30
+  sensitivity_windows_s: [10, 60]
+  non_overlapping: true
+  default_exclude_wake: true
+  label_overlap_threshold_s: 10     # default rule; overridable in label_rule_config.yaml later
+  hop_strategy: non_overlapping
+
+# ---------------------------------------------------------------------------
+# Task semantics.
+# ---------------------------------------------------------------------------
+task:
+  task_mode: retrospective_full_window
+  # A separate causal mode may be implemented LATER as an independent
+  # sensitivity analysis; it is not the main task and must not be conflated.
+  causal_available_at_window_start:
+    status: planned_optional
+    rule: "may only use information available at or before window start"
+
+# ---------------------------------------------------------------------------
+# Hard constraints. These are enforced in code; YAML must agree with the code
+# constants or the loader fails.
+# ---------------------------------------------------------------------------
+hard_constraints:
+  patient_level_split_required: true
+  allow_window_random_split: false
+  raw_data_mutable: false
+  save_audio_slices: false
+  feature_format: parquet
+
+# ---------------------------------------------------------------------------
+# Compute policy.
+# ---------------------------------------------------------------------------
+compute:
+  gpu_modules_optional: true
+  cpu_mainline_must_run_without_gpu: true
+
+# ---------------------------------------------------------------------------
+# Stage 1: data access, manual-download instructions and raw integrity audit.
+# This block ONLY records how download/audit is performed. It does NOT enable
+# any auto-download that bypasses authentication, and it never relaxes the
+# raw-read-only constraint above.
+# ---------------------------------------------------------------------------
+data_download:
+  # Strong, content-addressing hash for every audited file. Required field.
+  hash_algorithm: sha256
+  # Default behaviour: the primary dataset lives behind Science Data Bank
+  # authentication, so the downloader defaults to producing manual-download
+  # instructions rather than attempting a network fetch.
+  default_status: manual_required
+  # Auto-download is permitted ONLY when an explicit, verified, no-auth public
+  # URL is supplied AND --allow-auto-download is set on the command line.
+  allow_auto_download: false
+  # Where unverified download packages are staged BEFORE a human decides
+  # whether to promote them into data/raw. Resolved from paths.yaml.
+  staging_dir_key: data_external_incoming
+  extraction_dir_key: data_external_extracted
+  # Manifest schema version for file_manifest_stage1.csv.
+  manifest_schema_version: "1.0"
+  # Minimum free bytes required on the extraction disk before any archive is
+  # unpacked into the staging extraction dir (safety guard against partial,
+  # unrecorded extraction).
+  min_free_bytes_before_extract: 5368709120   # 5 GiB
+  # Whether ffmpeg/ffprobe and audio libs are available is detected at runtime;
+  # absence only limits audio container probing, it never blocks Stage 1.
+  audio_probe:
+    require_ffmpeg: false
+    on_missing_dependency: not_checked_due_to_dependency
+
+# ---------------------------------------------------------------------------
+# Stage 2: real-data structure exploration & patient/modality audit.
+# This block ONLY records how the audit is performed. It does NOT relax any
+# hard constraint. The license gate is the decisive control: until a human
+# authors docs/license_evidence/primary_dataset_license_confirmation.md the
+# audit does not scan data/raw. dataset.primary.license stays TBD until the
+# gate passes (the runtime license_status is derived from the evidence file).
+# ---------------------------------------------------------------------------
+data_audit:
+  # Required human license-evidence file (relative to docs/). Gate blocks on
+  # absence / incompleteness / DOI mismatch / license still TBD.
+  license_evidence_relpath: license_evidence/primary_dataset_license_confirmation.md
+  # Stage-2 manifest schema version.
+  manifest_schema_version: "2.0"
+  # Bounded CSV sample sizes (rows kept in memory for time/missingness stats).
+  csv_sample_head_rows: 200
+  csv_sample_tail_rows: 200
+  # Read raw only if the license gate passes AND raw stays read-only.
+  raw_read_only: true
+  # WAV probing uses the stdlib wave module only; no ffmpeg/soundfile install.
+  audio_probe_backend: stdlib_wave
+  # Whether two recorder segments per patient is assumed (it must NOT be; the
+  # audit handles 0/1/many recorder files per patient).
+  assume_two_recorders: false
+
+# ---------------------------------------------------------------------------
+# Stage 3: controlled annotation parsing & time-axis synchronization.
+# This block only records parsing/synchronization rules and an input-QC
+# threshold. It does NOT relax any hard constraint, does NOT window, does NOT
+# extract features, does NOT train, and does NOT assume any audio time anchor.
+# ---------------------------------------------------------------------------
+annotation_sync:
+  # Input-QC threshold (NOT a deletion threshold). An audio file whose
+  # header-derived duration is below this CANNOT contribute a 30 s main
+  # window, so Stage 3 marks it `excluded_audio_too_short_for_analysis` in the
+  # audio availability inventory. The original WAV is never modified, moved or
+  # deleted; the Stage-2 historical production run is never rewritten.
+  minimum_source_audio_duration_seconds: 30.0
+  # Versioned event-type mapping file (relative to config/). Mapping source,
+  # version and limitations are also written into the mapping report.
+  event_type_mapping_relpath: event_type_mapping.yaml
+  # Permitted (auditable) tolerance for the CSV absolute-vs-relative duration
+  # consistency check, in seconds. Larger mismatch => data-quality warning,
+  # never a forced alignment.
+  csv_abs_rel_duration_tolerance_s: 1.0
+  # Whether Stage 3 may treat record_start as an AUDIO acquisition start.
+  # Hard-coded False: record_start is the PSG annotation clock anchor only and
+  # MUST NOT be silently substituted for an audio time anchor.
+  record_start_is_audio_anchor: false
+
