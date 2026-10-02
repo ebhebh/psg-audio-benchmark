@@ -1,7 +1,5 @@
 # Data directory — intentionally EMPTY (no data is redistributed here)
 
-**LOCAL_CANDIDATE_NOT_PUBLISHED**
-
 This repository contains **no patient data, no audio, and no per-window derived
 data**. The `data/` tree exists only because the pipeline reads/writes under it.
 

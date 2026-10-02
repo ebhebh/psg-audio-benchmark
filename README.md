@@ -1,9 +1,9 @@
-# psg-audio-benchmark (code release candidate)
+# psg-audio-benchmark (author-approved public release)
 
-> Author-approved public code release candidate, version **1.0.0rc1**.
+> Author-approved public code release, version **1.0.0rc2**.
 > Repository: https://github.com/ebhebh/psg-audio-benchmark
 > Original code: MIT; aggregate outputs: CC BY 4.0 (see LICENSE_DATA.md).
-> Zenodo archiving is pending: no DOI has been assigned. The associated manuscript is not submitted or published.
+> Zenodo concept DOI: https://doi.org/10.5281/zenodo.23101023. Version 1.0.0rc1 is archived as https://doi.org/10.5281/zenodo.23101024. The associated manuscript is not submitted or published.
 
 
 Code for the study *"Benchmarking heart-rate and oxygen-saturation features for
@@ -279,16 +279,13 @@ are exploratory; no clinical deployability claim of any kind.
 
 ## 10. License and citation
 
-- **Code license: MIT (author-approved 2026-10-02)** — see
-  [`LICENSE_DECISION_REQUIRED.md`](LICENSE_DECISION_REQUIRED.md). The approved license scope is recorded there; nothing here relicenses
-  third-party code or dataset-derived material.
+- **Code license: MIT (author-approved 2026-10-02)** — see [`LICENSE`](LICENSE).
+  Aggregate outputs have a separate CC BY 4.0 notice in [`LICENSE_DATA.md`](LICENSE_DATA.md).
 - Third-party components: [`docs/THIRD_PARTY_LICENSES.md`](docs/THIRD_PARTY_LICENSES.md).
-- Software citation: [`CITATION.cff`](CITATION.cff) — a placeholder template
-  for a **not-yet-published** manuscript and a **not-yet-archived** repository.
-  It deliberately contains no DOI/URL and no journal-of-record metadata for
-  the manuscript: do not cite the manuscript as a published article until it
-  is accepted; no DOI may be invented here. Zenodo archiving (if later
-  authorized) assigns the real identifiers, which are then filled in.
+- Software citation: [`CITATION.cff`](CITATION.cff). Cite the version DOI for
+  the archived snapshot and the concept DOI for the latest version. The
+  associated manuscript remains unpublished; do not cite it as a published
+  article or imply journal acceptance.
 - Derived aggregate outputs in `results_published/` are dataset-derived
   (CC BY 4.0 data source): cite the data DOI `10.57760/sciencedb.19070` (V5)
   in any reuse.

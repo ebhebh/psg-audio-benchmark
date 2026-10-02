@@ -1,7 +1,5 @@
 # Third-party licenses (runtime and dev dependencies)
 
-**LOCAL_CANDIDATE_NOT_PUBLISHED**
-
 All third-party components are used via normal package imports; **no
 third-party source code is vendored or copied** into this repository. Each
 package retains its own license; nothing in this release relicenses them.

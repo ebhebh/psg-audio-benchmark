@@ -1,6 +1,4 @@
-# Privacy and data-governance assessment of the release candidate
-
-**LOCAL_CANDIDATE_NOT_PUBLISHED**
+# Privacy and data-governance assessment of the public release
 
 ## 1. Items evaluated and their disposition
 

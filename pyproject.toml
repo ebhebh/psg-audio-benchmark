@@ -2,9 +2,8 @@
 # psg-audio-benchmark — code release candidate for the BMC Medical Informatics
 # and Decision Making submission.
 # -----------------------------------------------------------------------------
-# STATUS: LOCAL_CANDIDATE_NOT_PUBLISHED. License NOT yet chosen (see
-# LICENSE_DECISION_REQUIRED.md); the `license` field below intentionally stays
-# unresolved until the authors select one.
+# STATUS: author-approved public release. Original code license: MIT. Aggregate
+# outputs have a separate CC BY 4.0 notice; see LICENSE_DATA.md.
 # =============================================================================
 
 [build-system]
@@ -13,11 +12,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "psg-audio-benchmark"
-version = "1.0.0rc1"
+version = "1.0.0rc2"
 description = "Leakage-safe patient-level benchmark of HR+SpO2 (and airflow secondary) window classification for PSG-scored respiratory events on the public Tao et al. 2025 multimodal sleep apnea dataset."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "TBD — LICENSE_DECISION_REQUIRED (candidates: MIT / BSD-3-Clause); do not redistribute until resolved" }
+license = "MIT"
 authors = [{ name = "PSG_Audio_Benchmark authors (see AUTHORS in the manuscript)" }]
 keywords = ["sleep apnea", "PSG", "benchmark", "nested cross-validation", "leakage control"]
 classifiers = [

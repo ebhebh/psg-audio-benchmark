@@ -9,7 +9,8 @@ authors:
   - family-names: Cai
     given-names: Mingjing
 license: MIT
-version: "1.0.0rc1"
+version: "1.0.0rc2"
+doi: "10.5281/zenodo.23101023"
 keywords:
   - sleep apnea
   - polysomnography

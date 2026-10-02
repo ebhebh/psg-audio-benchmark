@@ -4,6 +4,6 @@ Importing this package must NOT create directories, write files, or touch any
 data. Stage 0 provides configuration, reproducibility metadata and logging only.
 """
 
-__version__ = "1.0.0rc1"
+__version__ = "1.0.0rc2"
 
 __all__ = ["__version__"]

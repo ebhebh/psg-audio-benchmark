@@ -1,7 +1,5 @@
 # Reproduction guide — two clearly separated modes
 
-**LOCAL_CANDIDATE_NOT_PUBLISHED**
-
 Install first (README §2): `pip install -e .` **and**
 `pip install -r requirements-dev.txt` in your environment of choice. The
 editable install provides the `psg_audio_benchmark` package and the
